@@ -2,5 +2,5 @@ apiVersion: v2
 name: davis
 description: A Helm chart to deploy the davis DAV server
 type: application
-version: 0.1.0
-appVersion: "5.1.3"
+version: 0.2.0
+appVersion: "5.4.3"

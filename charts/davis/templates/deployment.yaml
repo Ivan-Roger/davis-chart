@@ -1,7 +1,8 @@
+{{- $fullName := include "davis.fullname" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "davis.fullname" . }}
+  name: {{ $fullName }}
   labels:
     {{- include "davis.labels" . | nindent 4 }}
 spec:
@@ -40,14 +41,46 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
+          # livenessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          env:
+            - name: APP_ENV
+              value: {{ .Values.davis.appEnv }}
+            - name: CALDAV_ENABLED
+              value: '{{ .Values.davis.features.calDav }}'
+            - name: CARDDAV_ENABLED
+              value: '{{ .Values.davis.features.cardDav }}'
+            - name: WEBDAV_ENABLED
+              value: '{{ .Values.davis.features.webDav }}'
+            - name: PUBLIC_CALENDARS_ENABLED
+              value: '{{ .Values.davis.features.publicCalendars }}'
+            - name: BIRTHDAY_REMINDER_OFFSET
+              value: {{ .Values.davis.birthdayReminderOffset }}
+            - name: APP_TIMEZONE
+              value: {{ .Values.davis.timezone }}
+            - name: ADMIN_LOGIN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $fullName }}
+                  key: ADMIN_LOGIN
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $fullName }}
+                  key: ADMIN_PASSWORD
+            - name: DATABASE_DRIVER
+              value: {{ .Values.davis.database.driver }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $fullName }}
+                  key: DATABASE_URL
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- with .Values.volumeMounts }}

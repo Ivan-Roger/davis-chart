@@ -1,0 +1,33 @@
+{{- if and .Values.httpRoute.enabled .Values.httpRoute.listener.enabled -}}
+{{- $fullName := include "davis.fullname" . -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: ListenerSet
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "davis.labels" . | nindent 4 }}
+  {{- with .Values.httpRoute.listener.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  parentRef:
+    {{- with (first .Values.httpRoute.parentRefs) }}
+    name: {{ .name }}
+    {{- with .namespace }}
+    namespace: {{ . }}
+    {{- end }}
+    {{- end }}
+  listeners:
+  {{- $certSecretName := .Values.httpRoute.listener.tls.secretName -}}
+  {{- range .Values.httpRoute.hostnames }}
+    - name: {{ . | replace "." "-" }}
+      hostname: {{ . }}
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: {{ $certSecretName }}
+  {{- end }}
+{{- end }}
